@@ -1,0 +1,248 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: #0f766e;
+    --font-size-multiplier: 1;
+  }
+
+  body {
+    background-color: #f8fafc;
+    color: #0f172a;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Accessibility Large Text scaling */
+  body.large-text {
+    font-size: 1.18rem;
+  }
+
+  body.large-text h1 {
+    font-size: 125%;
+  }
+
+  body.large-text h2 {
+    font-size: 125%;
+  }
+
+  body.large-text button {
+    font-size: 115%;
+  }
+
+  /* High Contrast Mode */
+  body.high-contrast {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  body.high-contrast button {
+    border-width: 3px !important;
+    border-color: #000000 !important;
+  }
+
+  body.high-contrast .bg-white {
+    border-color: #000000 !important;
+    border-width: 3px !important;
+  }
+
+  body.high-contrast .bg-slate-50 {
+    background-color: #ffffff !important;
+    border-color: #000000 !important;
+    border-width: 2px !important;
+  }
+}
+
+/* Custom kiosk scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Pulse slow animation for emergency elements */
+@keyframes pulseSlow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.82;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulseSlow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ===================================================
+   DARK MODE SYSTEM RULES
+   High-contrast, eye-friendly, calm healthcare dark palette
+   =================================================== */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #090d16;
+  color: #f8fafc;
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: #090d16;
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Dark surfaces */
+html.dark .bg-white {
+  background-color: #0f172a;
+}
+html.dark .bg-slate-50 {
+  background-color: #151f32;
+}
+html.dark .bg-slate-100 {
+  background-color: #1e293b;
+}
+
+/* Dark borders */
+html.dark .border-slate-200 {
+  border-color: #1e293b;
+}
+html.dark .border-slate-300 {
+  border-color: #334155;
+}
+html.dark .border-slate-400 {
+  border-color: #475569;
+}
+
+/* Dark text hierarchy */
+html.dark .text-slate-900 {
+  color: #f8fafc;
+}
+html.dark .text-slate-800 {
+  color: #f1f5f9;
+}
+html.dark .text-slate-700 {
+  color: #cbd5e1;
+}
+html.dark .text-slate-600 {
+  color: #94a3b8;
+}
+html.dark .text-slate-500 {
+  color: #64748b;
+}
+
+/* Form inputs & controls */
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #0f172a;
+  color: #f8fafc;
+  border-color: #334155;
+}
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b;
+}
+
+/* Interactive card & button hovers in dark mode */
+html.dark .hover\:bg-slate-50:hover {
+  background-color: #1e293b;
+}
+html.dark .hover\:bg-slate-100:hover {
+  background-color: #273549;
+}
+html.dark .active\:bg-slate-100:active {
+  background-color: #273549;
+}
+
+/* Switch toggle white knobs preserve white color */
+html.dark .rounded-full.bg-white {
+  background-color: #ffffff !important;
+}
+
+/* Tinted containers in dark mode */
+html.dark .bg-teal-50 {
+  background-color: rgba(15, 118, 110, 0.22);
+}
+html.dark .border-teal-200 {
+  border-color: rgba(20, 184, 166, 0.4);
+}
+html.dark .text-teal-900,
+html.dark .text-teal-950,
+html.dark .text-teal-800 {
+  color: #5eead4;
+}
+
+html.dark .bg-sky-50 {
+  background-color: rgba(14, 165, 233, 0.2);
+}
+html.dark .border-sky-300,
+html.dark .border-sky-200 {
+  border-color: rgba(56, 189, 248, 0.4);
+}
+html.dark .text-sky-900,
+html.dark .text-sky-800 {
+  color: #7dd3fc;
+}
+
+html.dark .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.2);
+}
+html.dark .border-amber-200,
+html.dark .border-amber-300 {
+  border-color: rgba(245, 158, 11, 0.4);
+}
+html.dark .text-amber-900,
+html.dark .text-amber-950 {
+  color: #fde68a;
+}
+
+html.dark .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.2);
+}
+html.dark .border-emerald-200 {
+  border-color: rgba(16, 185, 129, 0.4);
+}
+html.dark .text-emerald-900,
+html.dark .text-emerald-800 {
+  color: #6ee7b7;
+}
+
+html.dark .bg-purple-50 {
+  background-color: rgba(168, 85, 247, 0.2);
+}
+html.dark .border-purple-200 {
+  border-color: rgba(168, 85, 247, 0.4);
+}
+html.dark .text-purple-900 {
+  color: #d8b4fe;
+}
+
+html.dark .bg-rose-50 {
+  background-color: rgba(244, 63, 94, 0.2);
+}
+html.dark .border-rose-200 {
+  border-color: rgba(244, 63, 94, 0.4);
+}
+html.dark .text-rose-800,
+html.dark .text-rose-900 {
+  color: #fda4af;
+}
+
