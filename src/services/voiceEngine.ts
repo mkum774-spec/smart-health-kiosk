@@ -138,6 +138,10 @@ class VoiceEngine {
     }
   }
 
+  public stopSpeaking() {
+    this.cancel();
+  }
+
   // Real Speech Recognition or simulated speech recognition for browser compatibility
   public startListening(
     lang: 'en' | 'hi',

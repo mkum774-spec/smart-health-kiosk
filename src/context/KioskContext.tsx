@@ -18,9 +18,15 @@ import {
   TimeFilter, 
   TriageLevel, 
   VitalsData,
-  AssessmentTrack
+  AssessmentTrack,
+  SocratesHpi,
+  GroupConsentSettings,
+  AbnormalFinding,
+  StructuredMedication,
+  IllnessRecord
 } from '../types';
 import { apiService, submitAyurvedaIfApplicable } from '../services/apiService';
+import { DEMO_CREDENTIALS } from '../config/api';
 import { translations } from '../services/translations';
 import { voiceEngine } from '../services/voiceEngine';
 import { realtimeChannel } from '../services/realtimeChannel';
@@ -125,7 +131,23 @@ interface KioskContextType {
   // Actions
   verifyAbha: (abhaNumber: string) => Promise<ABHAPatient | null>;
   loadPresetPatient: (index: number) => void;
-  generateTokenAndRegister: () => PatientRegistration;
+  resolveOrCreateBackendPatient: (patient: ABHAPatient | null) => Promise<string>;
+  generateTokenAndRegister: () => Promise<PatientRegistration>;
+
+  // Round-2 Features
+  socratesHpi: SocratesHpi;
+  updateSocratesHpi: (hpi: Partial<SocratesHpi>) => void;
+  hasCurrentIllness: boolean | null;
+  setHasCurrentIllness: (has: boolean | null) => void;
+  groupConsent: GroupConsentSettings;
+  updateGroupConsent: (c: Partial<GroupConsentSettings>) => void;
+  abnormalFindings: AbnormalFinding[];
+  structuredMedications: StructuredMedication[];
+  illnessRecords: IllnessRecord[];
+  isSessionModalOpen: boolean;
+  setIsSessionModalOpen: (open: boolean) => void;
+  isHealthChatOpen: boolean;
+  setIsHealthChatOpen: (open: boolean) => void;
 }
 
 const KioskContext = createContext<KioskContextType | null>(null);
@@ -137,7 +159,7 @@ export const KioskProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Navigation & View
   const [currentScreen, setCurrentScreen] = useState<KioskScreen>('HOME');
   const [language, setLanguageState] = useState<Language>('en');
-  const [appView, setAppView] = useState<AppView>('KIOSK');
+  const [appView, setAppView] = useState<AppView>('PATIENT');
   const [isOffline, setIsOffline] = useState<boolean>(false);
 
   // Accessibility & Theme
@@ -261,6 +283,125 @@ export const KioskProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [documents, setDocuments] = useState<ScannedDocument[]>([]);
   const [currentTriageLevel, setCurrentTriageLevel] = useState<TriageLevel>('ROUTINE');
   const [generatedToken, setGeneratedToken] = useState<PatientRegistration | null>(null);
+
+  // Round-2: SOCRATES HPI & Illness State
+  const [hasCurrentIllness, setHasCurrentIllness] = useState<boolean | null>(null);
+  const [socratesHpi, setSocratesHpi] = useState<SocratesHpi>({
+    site: 'Chest & Throat',
+    onset: '2 days ago',
+    character: 'Dull ache & persistent cough',
+    radiation: 'None',
+    associations: ['Fatigue / Low energy'],
+    timeCourse: 'Gradual onset',
+    severity: 4
+  });
+
+  const updateSocratesHpi = useCallback((h: Partial<SocratesHpi>) => {
+    setSocratesHpi(prev => ({ ...prev, ...h }));
+  }, []);
+
+  // Round-2: Group Consent Settings
+  const [groupConsent, setGroupConsent] = useState<GroupConsentSettings>({
+    personalHistory: 'SHARE',
+    medicalHistory: 'SHARE',
+    familyHistory: 'SHARE',
+    currentIllness: 'SHARE',
+    medications: 'SHARE',
+    allergies: 'ALWAYS_SHARED',
+    documents: 'SHARE',
+    ayurveda: 'SHARE'
+  });
+
+  const updateGroupConsent = useCallback((c: Partial<GroupConsentSettings>) => {
+    setGroupConsent(prev => ({ ...prev, ...c }));
+  }, []);
+
+  // Round-2: Abnormal Findings (Fixture matching Patient P001 from Section 24)
+  const [abnormalFindings] = useState<AbnormalFinding[]>([
+    {
+      id: 'ab_01',
+      testName: 'Hemoglobin (CBC)',
+      testNameHi: 'हीमोग्लोबिन (रक्त जांच)',
+      value: '9.8',
+      unit: 'g/dL',
+      referenceRange: '12.0 - 15.5',
+      status: 'ATTENTION',
+      notes: 'Microcytic mild anemia noted on previous hospital visit'
+    },
+    {
+      id: 'ab_02',
+      testName: 'Fasting Blood Glucose',
+      testNameHi: 'फास्टिंग ब्लड शुगर',
+      value: '142',
+      unit: 'mg/dL',
+      referenceRange: '70 - 99',
+      status: 'ABNORMAL',
+      notes: 'Elevated fasting blood sugar; regular dietary review recommended'
+    }
+  ]);
+
+  // Round-2: Structured Medications
+  const [structuredMedications] = useState<StructuredMedication[]>([
+    {
+      id: 'med_01',
+      name: 'Metformin 500mg',
+      dosage: '1 tablet',
+      frequency: 'Twice daily',
+      frequencyHi: 'दिन में दो बार',
+      duration: 'Ongoing',
+      instructions: 'Take after meals with water',
+      instructionsHi: 'भोजन के बाद पानी के साथ लें',
+      status: 'ACTIVE',
+      prescribedBy: 'Dr. R. Verma'
+    },
+    {
+      id: 'med_02',
+      name: 'Amlodipine 5mg',
+      dosage: '1 tablet',
+      frequency: 'Once daily in morning',
+      frequencyHi: 'सुबह एक बार',
+      duration: 'Ongoing',
+      instructions: 'Take in morning after breakfast',
+      instructionsHi: 'सुबह नाश्ते के बाद लें',
+      status: 'ACTIVE',
+      prescribedBy: 'Dr. S. Sharma'
+    }
+  ]);
+
+  // Round-2: Illness Chronology
+  const [illnessRecords] = useState<IllnessRecord[]>([
+    {
+      id: 'ill_01',
+      title: 'Essential Hypertension',
+      titleHi: 'उच्च रक्तचाप (High BP)',
+      yearOrDate: 'Diagnosed 2022',
+      status: 'UNDER_TREATMENT',
+      summary: 'Managed on daily antihypertensive therapy; regular BP monitoring at OPD.',
+      relatedMedications: ['Amlodipine 5mg']
+    },
+    {
+      id: 'ill_02',
+      title: 'Type 2 Diabetes Mellitus',
+      titleHi: 'टाइप 2 मधुमेह (Diabetes)',
+      yearOrDate: 'Diagnosed 2024',
+      status: 'ACTIVE',
+      summary: 'Oral hypoglycemic therapy with dietary counseling and routine HbA1c review.',
+      relatedMedications: ['Metformin 500mg']
+    },
+    {
+      id: 'ill_03',
+      title: 'Acute Bronchitis Episode',
+      titleHi: 'तीव्र ब्रोंकाइटिस (खांसी-कफ)',
+      yearOrDate: 'Winter 2025',
+      status: 'RESOLVED',
+      summary: '5-day antibiotic and bronchodilator course completed with full recovery.'
+    }
+  ]);
+
+  // Round-2: Modals
+  const [isSessionModalOpen, setIsSessionModalOpen] = useState<boolean>(false);
+  const [isHealthChatOpen, setIsHealthChatOpen] = useState<boolean>(false);
+
 
   // Emergency & Hospital Queue State
   const [activeEmergencyRequest, setActiveEmergencyRequest] = useState<EmergencyRequest | null>(null);
@@ -761,11 +902,125 @@ export const KioskProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [portalPatient]);
 
-  // Generate Token and Register (WITHOUT ESTIMATED WAIT TIME, TK-100x format matching backend)
-  const generateTokenAndRegister = useCallback((): PatientRegistration => {
-    // Format TK-1001, TK-1002, matching backend GET /api/doctor/consultations
-    const tokenNumber = `TK-${1000 + queue.length + 1}`;
+  // Helper: Resolve existing backend patient ID or register walk-in patient on backend
+  const resolveOrCreateBackendPatient = useCallback(async (patient: ABHAPatient | null): Promise<string> => {
+    // 1. If patient previously authenticated via Patient Portal, use existing backend ID
+    if (portalPatient?.id && !portalPatient.id.startsWith("pat_demo_") && !portalPatient.id.startsWith("pat_live_")) {
+      return portalPatient.id;
+    }
 
+    if (!patient) {
+      throw new Error("No active patient record found to register consultation.");
+    }
+
+    const abhaId = patient.abhaNumber || patient.abhaAddress || DEMO_CREDENTIALS.ABHA_ID;
+    const cleanPhone = patient.phone ? patient.phone.replace(/\D/g, '').slice(-10) : "9876543210";
+    const password = DEMO_CREDENTIALS.PASSWORD;
+
+    // 2. Attempt login lookup first (handles existing backend patients e.g. DEMO-ABHA-P001)
+    try {
+      const loginRes = await apiService.patientLogin(abhaId, password);
+      if (loginRes?.patient?.id && !loginRes.patient.id.startsWith("pat_demo_") && !loginRes.patient.id.startsWith("pat_live_")) {
+        return loginRes.patient.id;
+      }
+    } catch {
+      // Patient not registered or credentials differ; proceed to registration
+    }
+
+    // 2b. If the selected patient is Demo Patient P001, try DEMO_CREDENTIALS.ABHA_ID if different from abhaId
+    if ((patient.name === "Demo Patient P001" || patient.abhaAddress === "demo.patient.p001@abdm") && abhaId !== DEMO_CREDENTIALS.ABHA_ID) {
+      try {
+        const demoLogin = await apiService.patientLogin(DEMO_CREDENTIALS.ABHA_ID, password);
+        if (demoLogin?.patient?.id && !demoLogin.patient.id.startsWith("pat_demo_") && !demoLogin.patient.id.startsWith("pat_live_")) {
+          return demoLogin.patient.id;
+        }
+      } catch {}
+    }
+
+    // 3. Register new walk-in patient on the backend: POST /api/patients
+    try {
+      const createRes = await apiService.createPatient({
+        name: patient.name || "Walk-in Patient",
+        age: patient.age || 45,
+        gender: patient.gender ? (patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1).toLowerCase()) : "Other",
+        abha_id: abhaId,
+        phone: cleanPhone || "9876543210",
+        password: password
+      });
+
+      if (createRes?.patient?.id) {
+        return createRes.patient.id;
+      }
+    } catch (createErr: any) {
+      // If failed due to unique constraint or existing ABHA ID, retry login lookup
+      try {
+        const retryLogin = await apiService.patientLogin(abhaId, password);
+        if (retryLogin?.patient?.id && !retryLogin.patient.id.startsWith("pat_demo_") && !retryLogin.patient.id.startsWith("pat_live_")) {
+          return retryLogin.patient.id;
+        }
+      } catch {}
+      throw new Error(createErr?.message || "Failed to register patient in hospital backend.");
+    }
+
+    throw new Error("Unable to obtain a valid patient ID from the hospital backend.");
+  }, [portalPatient]);
+
+  // Generate Token and Register (via live backend POST /api/consultations & POST /api/consultations/{id}/submit)
+  const generateTokenAndRegister = useCallback(async (): Promise<PatientRegistration> => {
+    // 1. Resolve or create backend patient ID (no hardcoded UUID)
+    const backendPatientId = await resolveOrCreateBackendPatient(activePatient);
+
+    // 2. Call backend POST /api/consultations to obtain official backend token & UUID
+    const consResult = await apiService.createConsultation({
+      patient_id: backendPatientId,
+      language: language || 'en'
+    });
+
+    const consultationId = consResult.id;
+    const tokenNumber = consResult.token_number; // Source of truth from backend (e.g. "TK-1004")
+
+    // 3. Submit clinical history to backend before marking ready for doctor
+    try {
+      await apiService.submitHistory(consultationId, {
+        chief_complaint: symptomsText || "Routine General Health Consultation",
+        allergies: history.allergies,
+        drug_history: history.currentMedications,
+        past_medical_history: history.chronicConditions,
+        hpi: socratesHpi as Record<string, any>,
+        ros: { reported: symptomsText, duration: symptomsDuration },
+        personal_history: { has_current_illness: hasCurrentIllness }
+      });
+    } catch (histErr) {
+      console.warn("submitHistory caught (non-fatal):", histErr);
+    }
+
+    // 4. Submit Ayurveda to backend if track === 'ayurveda' and answers exist
+    if (assessmentTrack === 'ayurveda' && ayurvedaData) {
+      try {
+        await submitAyurvedaIfApplicable(consultationId, assessmentTrack, {
+          prakriti: ayurvedaData.prakriti,
+          satmya: ayurvedaData.satmya,
+          sattva: ayurvedaData.sattva,
+          ahara_shakti: ayurvedaData.ahara_shakti,
+          vyayama_shakti: ayurvedaData.vyayama_shakti,
+          vaya: ayurvedaData.vaya_age,
+          pramana_height_cm: ayurvedaData.height_cm,
+          pramana_weight_kg: ayurvedaData.weight_kg,
+          ahara: ayurvedaData.ahara_habits,
+          vihara: ayurvedaData.vihara_lifestyle,
+          agni: ayurvedaData.agni,
+          koshtha: ayurvedaData.koshtha,
+          nidana: ayurvedaData.nidana_factors?.join(', ')
+        });
+      } catch (ayurErr) {
+        console.warn("submitAyurvedaIfApplicable caught (non-fatal):", ayurErr);
+      }
+    }
+
+    // 5. Call POST /api/consultations/{consultation_id}/submit to mark READY_FOR_DOCTOR
+    await apiService.submitConsultationToQueue(consultationId);
+
+    // Department routing based on triage / symptoms
     let deptId = 'dep-medicine';
     let deptName = 'General Medicine';
     let room = 'Room 204';
@@ -791,7 +1046,9 @@ export const KioskProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     const patientRecord: PatientRegistration = {
-      id: `reg-${Date.now()}`,
+      id: consultationId,
+      consultationId,
+      backendPatientId,
       tokenNumber,
       patient: activePatient || {
         abhaNumber: "14-2394-8192-3041",
@@ -826,28 +1083,25 @@ export const KioskProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setQueue(prev => [...prev, patientRecord]);
     realtimeChannel.broadcast('QUEUE_PATIENT_NEW', patientRecord);
 
-    // SIH26047: Submit Ayurveda to backend ONLY if track === 'ayurveda' and answers exist
-    if (assessmentTrack === 'ayurveda' && ayurvedaData) {
-      submitAyurvedaIfApplicable(patientRecord.id, assessmentTrack, {
-        prakriti: ayurvedaData.prakriti,
-        satmya: ayurvedaData.satmya,
-        sattva: ayurvedaData.sattva,
-        ahara_shakti: ayurvedaData.ahara_shakti,
-        vyayama_shakti: ayurvedaData.vyayama_shakti,
-        vaya: ayurvedaData.vaya_age,
-        pramana_height_cm: ayurvedaData.height_cm,
-        pramana_weight_kg: ayurvedaData.weight_kg,
-        ahara: ayurvedaData.ahara_habits,
-        vihara: ayurvedaData.vihara_lifestyle,
-        agni: ayurvedaData.agni,
-        koshtha: ayurvedaData.koshtha,
-        nidana: ayurvedaData.nidana_factors?.join(', ')
-      }).catch(err => console.warn("submitAyurvedaIfApplicable caught:", err));
-    }
-
     voiceEngine.playChime('success');
     return patientRecord;
-  }, [currentTriageLevel, symptomsText, symptomsVoiceTranscript, symptomsDuration, vitals, history, documents, selectedPastRecords, activePatient, queue, assessmentTrack, ayurvedaData]);
+  }, [
+    activePatient,
+    portalPatient,
+    language,
+    currentTriageLevel,
+    symptomsText,
+    symptomsVoiceTranscript,
+    symptomsDuration,
+    vitals,
+    history,
+    documents,
+    selectedPastRecords,
+    queue,
+    assessmentTrack,
+    ayurvedaData,
+    resolveOrCreateBackendPatient
+  ]);
 
   // Privacy-first reset: wipes all sensitive data
   const resetKioskSession = useCallback((withToast: boolean = false) => {
@@ -1034,7 +1288,23 @@ export const KioskProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         verifyAbha,
         loadPresetPatient,
+        resolveOrCreateBackendPatient,
         generateTokenAndRegister,
+
+        // Round-2 Features
+        socratesHpi,
+        updateSocratesHpi,
+        hasCurrentIllness,
+        setHasCurrentIllness,
+        groupConsent,
+        updateGroupConsent,
+        abnormalFindings,
+        structuredMedications,
+        illnessRecords,
+        isSessionModalOpen,
+        setIsSessionModalOpen,
+        isHealthChatOpen,
+        setIsHealthChatOpen,
       }}
     >
       {children}

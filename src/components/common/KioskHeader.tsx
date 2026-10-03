@@ -8,10 +8,14 @@ import {
   AlertTriangle,
   LogOut,
   Sun,
-  Moon
+  Moon,
+  ShieldCheck,
+  Bot
 } from 'lucide-react';
 import { useKiosk } from '../../context/KioskContext';
 import { AccessibilityModal } from './AccessibilityModal';
+import { SessionManagementModal } from './SessionManagementModal';
+import { HealthAssistantChat } from './HealthAssistantChat';
 
 const STEP_MAP: Record<string, { current: number; total: number }> = {
   HOME: { current: 0, total: 8 },
@@ -41,7 +45,11 @@ export const KioskHeader: React.FC = () => {
     resetKioskSession,
     accessibility,
     darkMode,
-    toggleDarkMode
+    toggleDarkMode,
+    isSessionModalOpen,
+    setIsSessionModalOpen,
+    isHealthChatOpen,
+    setIsHealthChatOpen
   } = useKiosk();
 
   const [showAccessibilityModal, setShowAccessibilityModal] = useState(false);
@@ -181,6 +189,28 @@ export const KioskHeader: React.FC = () => {
               )}
             </button>
 
+            {/* Security / Sessions Button */}
+            <button
+              type="button"
+              onClick={() => setIsSessionModalOpen(true)}
+              className="p-2 sm:p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border-2 border-slate-300 dark:border-slate-700 text-teal-800 dark:text-teal-300 rounded-2xl transition-all cursor-pointer shadow-sm"
+              title={language === 'hi' ? 'सत्र एवं सुरक्षा' : 'Session & Security'}
+              aria-label={language === 'hi' ? 'सत्र एवं सुरक्षा' : 'Session & Security'}
+            >
+              <ShieldCheck className="w-5 h-5 stroke-[2.5]" />
+            </button>
+
+            {/* Health Assistant Q&A Chat Button */}
+            <button
+              type="button"
+              onClick={() => setIsHealthChatOpen(true)}
+              className="p-2 sm:p-2.5 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/60 dark:hover:bg-teal-900 border-2 border-teal-300 dark:border-teal-700 text-teal-800 dark:text-teal-300 rounded-2xl transition-all cursor-pointer shadow-sm"
+              title={language === 'hi' ? 'स्वास्थ्य सहायक' : 'Health Assistant'}
+              aria-label={language === 'hi' ? 'स्वास्थ्य सहायक' : 'Health Assistant'}
+            >
+              <Bot className="w-5 h-5 stroke-[2.5]" />
+            </button>
+
             {/* Help Button */}
             <button
               type="button"
@@ -211,6 +241,22 @@ export const KioskHeader: React.FC = () => {
       {/* Accessibility Modal */}
       {showAccessibilityModal && (
         <AccessibilityModal onClose={() => setShowAccessibilityModal(false)} />
+      )}
+
+      {/* Session & Device Security Modal (Section 29 & 30) */}
+      {isSessionModalOpen && (
+        <SessionManagementModal
+          language={language}
+          onClose={() => setIsSessionModalOpen(false)}
+        />
+      )}
+
+      {/* Health Assistant Q&A Chat Modal (Section 31) */}
+      {isHealthChatOpen && (
+        <HealthAssistantChat
+          language={language}
+          onClose={() => setIsHealthChatOpen(false)}
+        />
       )}
 
       {/* Help Modal */}

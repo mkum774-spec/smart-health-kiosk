@@ -314,7 +314,36 @@ export const translations = {
     // Error states
     errorAbhaInvalid: "Please enter a valid 14-digit ABHA number.",
     errorMicDenied: "Microphone access is not available. You may select symptoms directly using the screen buttons.",
-    errorGeneral: "Unable to complete request. Please notify hospital staff."
+    errorGeneral: "Unable to complete request. Please notify hospital staff.",
+
+    // Round-2 Features
+    listenQuestion: "Hear Question",
+    speakAnswer: "Speak your answer",
+    weUnderstood: "We understood:",
+    yesCorrect: "Yes, correct",
+    tryAgain: "Try again",
+    preferNotToSay: "Prefer not to say",
+    skipQuestion: "Skip question",
+    ayurvedaSectionAbout: "About You",
+    ayurvedaSectionDigestion: "Food & Digestion",
+    ayurvedaSectionMind: "Lifestyle & Mind",
+    ayurvedaSectionCurrent: "Current Health",
+    ayurvedaSectionClinician: "Clinician Assessment",
+    derivedFromRecords: "Already available from your health information",
+    personalHistoryTitle: "Personal Health Inquiry",
+    currentIllnessQuestion: "Do you currently have any illness or discomfort?",
+    socratesChiefComplaint: "Chief Complaint",
+    socratesSite: "Where is the problem or pain located?",
+    socratesOnset: "When did it start and how?",
+    socratesSeverity: "How severe is your discomfort (1 to 10)?",
+    groupConsentTitle: "Information Sharing Choices",
+    alwaysSharedClinicalSafety: "Allergies and active medications are always shared with your doctor for your clinical safety.",
+    patientSummaryTitle: "Your Health Summary",
+    doctorSummaryTitle: "Clinical Case Summary",
+    sessionSecurity: "Session & Device Security",
+    healthAssistant: "Health Assistant (AI)",
+    shareWithDoctor: "Share with doctor",
+    dontShare: "Don't share"
   },
 
   hi: {
@@ -632,6 +661,36 @@ export const translations = {
     // Error states
     errorAbhaInvalid: "कृपया सही 14-अंकों का आभा नंबर दर्ज करें।",
     errorMicDenied: "माइक्रोफ़ोन उपलब्ध नहीं है। आप स्क्रीन के बटनों द्वारा लक्षण चुन सकते हैं।",
-    errorGeneral: "अनुरोध पूरा करने में असमर्थ। कृपया अस्पताल सहायता केंद्र से संपर्क करें।"
+    errorGeneral: "अनुरोध पूरा करने में असमर्थ। कृपया अस्पताल सहायता केंद्र से संपर्क करें।",
+
+    // Round-2 Features
+    listenQuestion: "सवाल सुनें",
+    speakAnswer: "बोलकर उत्तर दें",
+    weUnderstood: "हमने यह समझा:",
+    yesCorrect: "हाँ, यह सही है",
+    tryAgain: "दोबारा कहें",
+    preferNotToSay: "बताना नहीं चाहते",
+    skipQuestion: "आगे बढ़ें (छोड़ें)",
+    ayurvedaSectionAbout: "आपके बारे में",
+    ayurvedaSectionDigestion: "आहार एवं पाचन",
+    ayurvedaSectionMind: "दिनचर्या एवं मन",
+    ayurvedaSectionCurrent: "वर्तमान स्वास्थ्य",
+    ayurvedaSectionClinician: "चिकित्सक परीक्षण",
+    derivedFromRecords: "आपके दर्ज रिकॉर्ड से स्वतः प्राप्त",
+    personalHistoryTitle: "व्यक्तिगत स्वास्थ्य जांच",
+    currentIllnessQuestion: "क्या आप वर्तमान में किसी बीमारी या अस्वस्थता से पीड़ित हैं?",
+    socratesChiefComplaint: "मुख्य समस्या",
+    socratesSite: "तकलीफ या दर्द शरीर के किस हिस्से में है?",
+    socratesOnset: "यह कब और कैसे शुरू हुआ?",
+    socratesSeverity: "तकलीफ की तीव्रता कितनी है (1 से 10)?",
+    groupConsentTitle: "जानकारी साझा करने के विकल्प",
+    alwaysSharedClinicalSafety: "चिकित्सकीय सुरक्षा के लिए एलर्जी और वर्तमान दवाएं डॉक्टर के साथ हमेशा साझा की जाती हैं।",
+    patientSummaryTitle: "आपका स्वास्थ्य सारांश",
+    doctorSummaryTitle: "चिकित्सकीय केस सारांश",
+    sessionSecurity: "सत्र एवं उपकरण सुरक्षा",
+    healthAssistant: "स्वास्थ्य सहायक (AI)",
+    shareWithDoctor: "डॉक्टर के साथ साझा करें",
+    dontShare: "साझा न करें"
   }
 };
+
