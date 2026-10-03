@@ -121,13 +121,14 @@ class ApiService {
 
       if (response.ok) {
         const data = await response.json();
-        const patient: BackendPatient = data.patient || data || {
-          id: data.id || "pat_live_001",
-          name: data.name || "Demo Patient P001",
+        const patientId = data.patient_id || data.id;
+        const patient: BackendPatient = {
+          id: patientId,
+          name: data.name || (data.patient && data.patient.name) || "Demo Patient P001",
           abha_id: abhaId,
-          age: data.age || 52,
-          gender: data.gender || "FEMALE",
-          phone: data.phone || "+91 98765 43210"
+          age: data.age || (data.patient && data.patient.age) || 52,
+          gender: data.gender || (data.patient && data.patient.gender) || "FEMALE",
+          phone: data.phone || (data.patient && data.patient.phone) || "+91 98765 43210"
         };
         this.notifyFallback(false);
         return { patient, isLiveBackend: true };
@@ -239,11 +240,18 @@ class ApiService {
   }
 
   /**
-   * Submit or create consultation to obtain official backend token number (e.g. TK-1001)
+   * Register a new patient in the hospital backend: POST /api/patients
    */
-  public async submitConsultation(payload: any): Promise<{ tokenNumber: string; consultationId: string; isLiveBackend: boolean }> {
+  public async createPatient(payload: {
+    name: string;
+    age?: number;
+    gender?: string;
+    abha_id?: string;
+    phone?: string;
+    password?: string;
+  }): Promise<{ patient: BackendPatient; isLiveBackend: boolean }> {
     try {
-      const response = await this.fetchWithTimeout(API_ENDPOINTS.CREATE_CONSULTATION, {
+      const response = await this.fetchWithTimeout(API_ENDPOINTS.CREATE_PATIENT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -254,19 +262,133 @@ class ApiService {
 
       if (response.ok) {
         const data = await response.json();
-        const tokenNumber = data.token_number || data.tokenNumber || `TK-${this.fallbackTokenCounter++}`;
-        const consultationId = data.id || `cons_${Date.now()}`;
+        const patient: BackendPatient = {
+          id: data.id,
+          name: data.name,
+          abha_id: data.abha_id,
+          age: data.age,
+          gender: data.gender,
+          phone: data.phone
+        };
         this.notifyFallback(false);
-        return { tokenNumber, consultationId, isLiveBackend: true };
+        return { patient, isLiveBackend: true };
       }
+
+      const errText = await response.text();
+      throw new Error(`Failed to register patient (${response.status}): ${errText}`);
+    } catch (err: any) {
+      this.notifyFallback(true);
+      throw err;
+    }
+  }
+
+  /**
+   * Create an initial consultation in hospital backend: POST /api/consultations
+   * Returns official backend consultation ID and token_number.
+   */
+  public async createConsultation(payload: {
+    patient_id: string;
+    language?: string;
+  }): Promise<{ id: string; token_number: string; status: string }> {
+    const response = await this.fetchWithTimeout(API_ENDPOINTS.CREATE_CONSULTATION, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (!data.id || !data.token_number) {
+        throw new Error("Backend did not return consultation ID or token number.");
+      }
+      this.notifyFallback(false);
+      return {
+        id: data.id,
+        token_number: data.token_number,
+        status: data.status || "IN_PROGRESS"
+      };
+    }
+
+    const errText = await response.text();
+    throw new Error(`Consultation creation failed (${response.status}): ${errText}`);
+  }
+
+  /**
+   * Submit clinical history interview to backend: POST /api/consultations/{id}/history
+   */
+  public async submitHistory(consultationId: string, payload: {
+    chief_complaint?: string;
+    allergies?: string[];
+    drug_history?: string[];
+    past_medical_history?: string[];
+    past_surgical_history?: string[];
+    hpi?: Record<string, any>;
+    ros?: Record<string, any>;
+    personal_history?: Record<string, any>;
+    family_history?: Record<string, any>;
+  }): Promise<{ status: string }> {
+    try {
+      const response = await this.fetchWithTimeout(API_ENDPOINTS.SUBMIT_HISTORY(consultationId), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (e) {
+      console.warn("submitHistory caught error (non-fatal):", e);
+    }
+    return { status: "saved" };
+  }
+
+  /**
+   * Submit consultation to mark READY_FOR_DOCTOR: POST /api/consultations/{id}/submit
+   * Advances status so it becomes visible on Doctor Portal queue.
+   */
+  public async submitConsultationToQueue(consultationId: string): Promise<{
+    consultation_id: string;
+    status: string;
+    token_number: string;
+    priority: string;
+  }> {
+    const response = await this.fetchWithTimeout(API_ENDPOINTS.SUBMIT_CONSULTATION(consultationId), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      this.notifyFallback(false);
+      return data;
+    }
+
+    const errText = await response.text();
+    throw new Error(`Failed to submit consultation to doctor queue (${response.status}): ${errText}`);
+  }
+
+  /**
+   * Legacy wrapper kept for backward compatibility.
+   */
+  public async submitConsultation(payload: any): Promise<{ tokenNumber: string; consultationId: string; isLiveBackend: boolean }> {
+    try {
+      const res = await this.createConsultation(payload);
+      return { tokenNumber: res.token_number, consultationId: res.id, isLiveBackend: true };
     } catch (err) {
       console.warn("Live consultation creation failed. Using fallback token:", err);
       this.notifyFallback(true);
+      const tokenNumber = `TK-${this.fallbackTokenCounter++}`;
+      return { tokenNumber, consultationId: `cons_${Date.now()}`, isLiveBackend: false };
     }
-
-    this.notifyFallback(true);
-    const tokenNumber = `TK-${this.fallbackTokenCounter++}`;
-    return { tokenNumber, consultationId: `cons_${Date.now()}`, isLiveBackend: false };
   }
 }
 

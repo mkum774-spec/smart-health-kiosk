@@ -82,6 +82,8 @@ export interface HistoricalFolder {
 
 export interface PatientRegistration {
   id: string;
+  consultationId?: string;
+  backendPatientId?: string;
   tokenNumber: string; // e.g., "TK-1001"
   patient: ABHAPatient;
   symptomsText: string;
@@ -201,7 +203,7 @@ export interface AyurvedaData {
   weight_kg: number;
 }
 
-export type AppView = 'KIOSK' | 'STAFF' | 'SPLIT';
+export type AppView = 'KIOSK' | 'STAFF' | 'SPLIT' | 'PATIENT';
 
 export interface BackendPatient {
   id: string;
@@ -227,4 +229,305 @@ export interface BackendConsultation {
   department?: string;
   assigned_room?: string;
 }
+
+// ----------------------------------------------------
+// ROUND-2 TYPES & INTERFACES
+// ----------------------------------------------------
+
+export interface VoiceInterpretationRequest {
+  questionId: string;
+  spokenInput: string;
+  language: Language;
+  availableOptions?: Array<{
+    id: string;
+    label: string;
+  }>;
+}
+
+export interface VoiceInterpretationResponse {
+  selectedOption?: string;
+  interpretedText?: string;
+  confidence: number;
+  needsConfirmation: boolean;
+  ambiguous?: boolean;
+}
+
+export interface QuestionOption {
+  id: string;
+  labelEn: string;
+  labelHi: string;
+  secondaryEn?: string;
+  secondaryHi?: string;
+  isUrgent?: boolean;
+}
+
+export interface QuestionDefinition {
+  id: string;
+  category: string;
+  textEn: string;
+  textHi: string;
+  secondaryTextEn?: string;
+  secondaryTextHi?: string;
+  derivedNoticeEn?: string;
+  derivedNoticeHi?: string;
+  isDerived?: boolean;
+  derivedValue?: string;
+  answerType:
+    | 'single_choice'
+    | 'multi_choice'
+    | 'text'
+    | 'number'
+    | 'date'
+    | 'duration'
+    | 'yes_no';
+  options?: QuestionOption[];
+  required?: boolean;
+  allowSkip?: boolean;
+  allowPreferNotToSay?: boolean;
+  voiceEnabled?: boolean;
+  audioEnabled?: boolean;
+}
+
+export interface SocratesHpi {
+  site?: string;
+  onset?: string;
+  character?: string;
+  radiation?: string;
+  associations?: string[];
+  timeCourse?: string;
+  exacerbatingFactors?: string;
+  relievingFactors?: string;
+  severity?: number; // 1-10
+}
+
+export type SharingPreference = 'SHARE' | 'DONT_SHARE' | 'PREFER_NOT_TO_SAY';
+
+export interface GroupConsentSettings {
+  personalHistory: SharingPreference;
+  medicalHistory: SharingPreference;
+  familyHistory: SharingPreference;
+  currentIllness: SharingPreference;
+  medications: SharingPreference;
+  allergies: 'ALWAYS_SHARED'; // Clinical safety rule
+  documents: SharingPreference;
+  ayurveda: SharingPreference;
+}
+
+export interface AbnormalFinding {
+  id: string;
+  testName: string;
+  testNameHi?: string;
+  value: string;
+  referenceRange?: string;
+  unit?: string;
+  status: 'ABNORMAL' | 'CRITICAL' | 'ATTENTION';
+  notes?: string;
+}
+
+export interface StructuredMedication {
+  id: string;
+  name: string;
+  dosage: string;
+  frequency: string;
+  frequencyHi?: string;
+  duration: string;
+  instructions: string;
+  instructionsHi?: string;
+  status: 'ACTIVE' | 'PAUSED' | 'DISCONTINUED';
+  prescribedBy?: string;
+}
+
+export interface IllnessRecord {
+  id: string;
+  title: string;
+  titleHi?: string;
+  yearOrDate: string;
+  status: 'ACTIVE' | 'UNDER_TREATMENT' | 'RESOLVED' | 'HISTORICAL';
+  summary: string;
+  relatedMedications?: string[];
+  relatedReports?: string[];
+}
+
+export interface UserSession {
+  id: string;
+  deviceName: string;
+  deviceType: 'KIOSK_TERMINAL' | 'MOBILE' | 'DESKTOP';
+  ipAddress?: string;
+  lastActive: string;
+  isCurrent: boolean;
+}
+
+export interface DoctorAccessAuthorization {
+  consultationId: string;
+  doctorName: string;
+  department: string;
+  hospitalName: string;
+  grantedAt: string;
+  isRevoked: boolean;
+}
+
+// ----------------------------------------------------
+// PATIENT PORTAL TYPES
+// ----------------------------------------------------
+
+export type PatientPortalTab =
+  | 'HOME'
+  | 'CONVERSATION'
+  | 'REPORTS'
+  | 'REPORT_DETAIL'
+  | 'APPOINTMENTS'
+  | 'PRESCRIPTIONS'
+  | 'HEALTH_RECORDS'
+  | 'ILLNESS_HISTORY'
+  | 'AYURVEDA'
+  | 'CONSENT'
+  | 'SESSIONS'
+  | 'PROFILE'
+  | 'HELP'
+  | 'FIND_HOSPITAL';
+
+export type HospitalType = 'Hospital' | 'Clinic' | 'Diagnostic Centre';
+
+export interface HospitalFacility {
+  id: string;
+  name: string;
+  nameHi?: string;
+  type: HospitalType;
+  distanceKm: number;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  operatingStatus: 'Open Now' | '24x7' | 'Closed';
+  timing: string;
+  timingHi?: string;
+  departments: string[];
+  departmentsHi?: string[];
+  facilities: string[];
+  facilitiesHi?: string[];
+  phone: string;
+  appointmentAvailable: boolean;
+  hasKiosk: boolean;
+  emergencyAvailable?: boolean;
+}
+
+export interface HospitalFilters {
+  maxDistanceKm?: number;
+  specialty?: string;
+  facilityType?: 'ALL' | HospitalType;
+  openOnly?: boolean;
+  twentyFourSevenOnly?: boolean;
+  appointmentOnly?: boolean;
+}
+
+export interface PatientAppointment {
+  id: string;
+  doctorName: string;
+  doctorSpecialty: string;
+  department: string;
+  hospitalName: string;
+  date: string;
+  time: string;
+  room: string;
+  status: 'UPCOMING' | 'COMPLETED' | 'CANCELLED';
+  consultationType: 'OPD_VISIT' | 'FOLLOW_UP' | 'TELECONSULT';
+  preparationNotes?: string;
+  tokenNumber?: string;
+}
+
+export interface ExtractedLabParam {
+  name: string;
+  value: string;
+  unit?: string;
+  referenceRange?: string;
+  status?: 'NORMAL' | 'ABNORMAL' | 'ATTENTION';
+}
+
+export interface PatientReport {
+  id: string;
+  title: string;
+  titleHi?: string;
+  category: 'Lab Reports' | 'Imaging' | 'Prescriptions' | 'Other' | string;
+  date: string;
+  documentDate?: string;
+  uploadDate?: string;
+  hospitalOrLab: string;
+  doctorName?: string;
+  summary: string;
+  originalDocumentUrl?: string;
+  extractedValues?: ExtractedLabParam[];
+  aiExplanation?: string;
+  aiExplanationHi?: string;
+  isUploadedByUser?: boolean;
+  processingStatus?: 'UPLOADING' | 'PROCESSING' | 'CLASSIFYING' | 'PROCESSED' | 'NEEDS_REVIEW' | 'FAILED';
+  aiClassification?: string;
+  aiConfidence?: 'HIGH' | 'MEDIUM' | 'LOW';
+  isSharedForConsultation?: boolean;
+  isAiRecommended?: boolean;
+  fileSize?: string;
+  fileName?: string;
+}
+
+export interface PatientPrescription {
+  id: string;
+  consultationId?: string;
+  doctorName: string;
+  department: string;
+  hospitalName: string;
+  date: string;
+  diagnosisSummary: string;
+  medicines: {
+    name: string;
+    dosage: string;
+    frequency: string;
+    frequencyHi?: string;
+    instructions: string;
+    instructionsHi?: string;
+    duration: string;
+  }[];
+  originalDocumentUrl?: string;
+  followUpDate?: string;
+}
+
+export interface AyurvedaFactorGroup {
+  name: string;
+  nameHi: string;
+  items: {
+    label: string;
+    labelHi: string;
+    value: string;
+    valueHi: string;
+    source: 'PATIENT_PROVIDED' | 'CLINICAL_DERIVED';
+    description?: string;
+  }[];
+}
+
+export interface PatientNotification {
+  id: string;
+  title: string;
+  titleHi?: string;
+  message: string;
+  messageHi?: string;
+  timestamp: string;
+  read: boolean;
+  type: 'APPOINTMENT' | 'REPORT' | 'PRESCRIPTION' | 'SECURITY';
+  actionTab?: PatientPortalTab;
+}
+
+export interface QrLinkSessionResult {
+  success: boolean;
+  kioskId?: string;
+  tokenNumber?: string;
+  consultationId?: string;
+  department?: string;
+  assignedRoom?: string;
+  patientName?: string;
+  message?: string;
+}
+
+
 

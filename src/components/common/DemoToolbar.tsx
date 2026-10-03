@@ -12,7 +12,8 @@ import {
   Wifi, 
   WifiOff, 
   CheckCircle2, 
-  Languages 
+  Languages,
+  Smartphone 
 } from 'lucide-react';
 import { useKiosk } from '../../context/KioskContext';
 import { MOCK_OCR_PRESETS } from '../../services/mockData';
@@ -113,6 +114,16 @@ export const DemoToolbar: React.FC = () => {
           </span>
 
           <div className="inline-flex bg-slate-800 p-1 rounded-xl border border-slate-700">
+            <button
+              type="button"
+              onClick={() => setAppView('PATIENT')}
+              className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                appView === 'PATIENT' ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <Smartphone className="w-4 h-4" />
+              <span>Patient Website</span>
+            </button>
             <button
               type="button"
               onClick={() => setAppView('KIOSK')}

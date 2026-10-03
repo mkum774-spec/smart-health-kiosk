@@ -5,6 +5,8 @@ import { KioskHeader } from './components/common/KioskHeader';
 import { SessionTimeoutModal } from './components/common/SessionTimeoutModal';
 import { ShieldAlert, CheckCircle2 } from 'lucide-react';
 
+import { PatientWebsiteRoot } from './components/patient/PatientWebsiteRoot';
+
 // Kiosk Screens
 import { HomeScreen } from './components/kiosk/HomeScreen';
 import { EmergencyScreen } from './components/kiosk/EmergencyScreen';
@@ -39,11 +41,25 @@ export const AppContent: React.FC = () => {
 
   const [staffTab, setStaffTab] = useState<'overview' | 'emergency' | 'queue' | 'departments'>('overview');
 
-  // Check URL pathname or hash for staff routing
+  // Check URL pathname or hash for routing
   useEffect(() => {
-    if (window.location.pathname.includes('/staff') || window.location.hash.includes('staff')) {
-      setAppView('STAFF');
-    }
+    const checkRoute = () => {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      if (path.includes('/staff') || hash.includes('staff')) {
+        setAppView('STAFF');
+      } else if (path.includes('/kiosk') || hash.includes('kiosk')) {
+        setAppView('KIOSK');
+      } else if (path.includes('/split') || hash.includes('split')) {
+        setAppView('SPLIT');
+      } else if (path.includes('/patient') || path.includes('/portal') || hash.includes('patient') || hash.includes('portal')) {
+        setAppView('PATIENT');
+      }
+    };
+
+    checkRoute();
+    window.addEventListener('hashchange', checkRoute);
+    return () => window.removeEventListener('hashchange', checkRoute);
   }, [setAppView]);
 
   // Synchronize accessibility classes on body
@@ -119,6 +135,13 @@ export const AppContent: React.FC = () => {
       )}
 
       {/* Main Presentation Views */}
+      {/* 0. PATIENT WEBSITE (Public Landing & Patient Companion Portal) */}
+      {appView === 'PATIENT' && (
+        <div className="flex-1 flex flex-col min-h-0">
+          <PatientWebsiteRoot />
+        </div>
+      )}
+
       {/* 1. PATIENT KIOSK (Clean, No Hackathon Bar) */}
       {appView === 'KIOSK' && (
         <div className="flex-1 flex flex-col min-h-screen">

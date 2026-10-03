@@ -83,7 +83,7 @@ export const MedicalHistoryScreen: React.FC = () => {
       chronicConditions: conditions,
       currentMedications: medsArray,
     });
-    setScreen('DOCUMENTS');
+    setScreen('REVIEW');
   };
 
   return (

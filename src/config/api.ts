@@ -5,6 +5,7 @@ export const API_BASE_URL = "https://sih26047-backend.onrender.com";
 
 export const API_ENDPOINTS = {
   PATIENT_LOGIN: `${API_BASE_URL}/api/patients/login`,
+  CREATE_PATIENT: `${API_BASE_URL}/api/patients`,
   PATIENT_CONSULTATIONS: (patientId: string) => `${API_BASE_URL}/api/patients/${patientId}/consultations`,
   PATIENT_BY_ID: (patientId: string) => `${API_BASE_URL}/api/patients/${patientId}`,
   CREATE_CONSULTATION: `${API_BASE_URL}/api/consultations`,
