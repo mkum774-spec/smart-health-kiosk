@@ -347,7 +347,7 @@ export const ClinicalConversationView: React.FC<ClinicalConversationViewProps> =
   };
 
   return (
-    <div className="w-full h-full min-h-[calc(100vh-4rem)] flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white select-none">
+    <div className="w-full h-full min-h-0 flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white select-none">
       
       {/* 1. Clinical Assistant Header Workspace Bar */}
       <div className="p-3 sm:p-4 bg-teal-800 text-white flex items-center justify-between border-b border-teal-700 shadow-sm flex-shrink-0">

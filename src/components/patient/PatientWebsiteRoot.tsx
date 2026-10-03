@@ -55,13 +55,29 @@ export const PatientWebsiteRoot: React.FC = () => {
 
   // Authentication & Patient State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    // Check if user was previously logged in
+    // Check if user was previously logged in or accessing portal directly
     try {
-      return localStorage.getItem('medikiosk_patient_auth') === 'true';
+      const hash = typeof window !== 'undefined' ? window.location.hash.toLowerCase() : '';
+      if (hash.includes('portal') || hash.includes('dashboard') || hash.includes('patient')) return true;
+      const stored = localStorage.getItem('medikiosk_patient_auth');
+      return stored !== 'false';
     } catch {
-      return false;
+      return true;
     }
   });
+
+  // Keep authenticated state in sync with URL hash
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.toLowerCase();
+      if (hash.includes('portal') || hash.includes('dashboard')) {
+        setIsAuthenticated(true);
+      }
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
 
   const [activePatient, setActivePatient] = useState<ABHAPatient>(() => patientPortalService.getPatientProfile());
   const [activeTab, setActiveTab] = useState<PatientPortalTab>('HOME');
@@ -159,7 +175,7 @@ export const PatientWebsiteRoot: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+    <div className={`flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors ${isAuthenticated ? 'fixed inset-0 h-screen max-h-screen overflow-hidden z-0' : 'min-h-screen'}`}>
       
       {/* ------------------------------------------------------------- */}
       {/* CASE A: PUBLIC LANDING PAGE (When patient is not logged in)   */}
@@ -239,7 +255,7 @@ export const PatientWebsiteRoot: React.FC = () => {
         /* ------------------------------------------------------------- */
         /* CASE B: AUTHENTICATED PATIENT COMPANION PORTAL               */
         /* ------------------------------------------------------------- */
-        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        <div className="flex-1 flex flex-col h-full max-h-full min-h-0 overflow-hidden">
           {/* Authenticated Top Navigation Header */}
           <PortalHeader
             language={language}
@@ -260,8 +276,8 @@ export const PatientWebsiteRoot: React.FC = () => {
           />
 
           {/* Portal Body with Sidebar & Center Tab Content */}
-          <div className="flex-1 flex overflow-hidden relative">
-            {/* Desktop Left Navigation Sidebar (Fixed & Independently scrollable) */}
+          <div className="flex-1 flex flex-row overflow-hidden min-h-0 w-full relative">
+            {/* Desktop Left Navigation Sidebar (Stationary & Independently scrollable) */}
             <PortalSidebar
               language={language}
               activeTab={activeTab}
@@ -269,7 +285,10 @@ export const PatientWebsiteRoot: React.FC = () => {
             />
 
             {/* Main Content Area (Independently scrollable) */}
-            <main className={`flex-1 overflow-y-auto ${activeTab === 'CONVERSATION' ? 'p-0' : 'p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8'}`}>
+            <main 
+              id="patient-portal-main-scroll"
+              className={`flex-1 h-full min-h-0 overflow-y-auto ${activeTab === 'CONVERSATION' ? 'p-0 overflow-hidden' : 'p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8'}`}
+            >
               {activeTab === 'HOME' && (
                 <DashboardHome
                   language={language}

@@ -137,7 +137,7 @@ export const AppContent: React.FC = () => {
       {/* Main Presentation Views */}
       {/* 0. PATIENT WEBSITE (Public Landing & Patient Companion Portal) */}
       {appView === 'PATIENT' && (
-        <div className="flex-1 flex flex-col min-h-screen">
+        <div className="flex-1 flex flex-col min-h-0">
           <PatientWebsiteRoot />
         </div>
       )}

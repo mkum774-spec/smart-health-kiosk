@@ -105,7 +105,7 @@ export const PortalSidebar: React.FC<PortalSidebarProps> = ({
   return (
     <aside 
       aria-label="Patient Portal Navigation"
-      className="hidden lg:flex flex-col w-64 xl:w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-4 space-y-2 flex-shrink-0 select-none overflow-y-auto"
+      className="hidden lg:flex flex-col w-64 xl:w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-4 space-y-2 flex-shrink-0 select-none h-full min-h-0 overflow-y-auto"
     >
       {/* Main Navigation List */}
       <nav className="flex-1 space-y-1 pr-1">
